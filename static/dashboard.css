@@ -1,0 +1,462 @@
+/*
+ * STEP 8 대시보드 스타일
+ * 무채색 기반 + 강조색 1개 (--accent), 얇은 선과 여백으로 영역을 나눈다.
+ * 다크/라이트 모드는 CSS 변수만 바꿔 처리한다.
+ */
+
+:root {
+    --bg: #f6f6f5;
+    --surface: #fdfdfc;
+    --fg: #262626;
+    --muted: #767676;
+    --line: #d9d9d6;
+    --line-strong: #a8a8a4;
+    --accent: #4f7a6c;
+    --mono: ui-monospace, "Cascadia Mono", Consolas, "D2Coding", monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", "Malgun Gothic", sans-serif;
+    color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #161616;
+        --surface: #1c1c1c;
+        --fg: #e4e4e2;
+        --muted: #8c8c8a;
+        --line: #2f2f2e;
+        --line-strong: #5a5a58;
+        --accent: #8fbcac;
+        color-scheme: dark;
+    }
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--sans);
+    font-size: 14px;
+}
+
+h1,
+h2 {
+    margin: 0;
+    font-weight: 600;
+}
+
+h1 {
+    font-size: 15px;
+}
+
+h2 {
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.muted {
+    color: var(--muted);
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+button {
+    padding: 6px 12px;
+    border: 1px solid var(--line-strong);
+    border-radius: 2px;
+    background: transparent;
+    color: var(--fg);
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+button:hover {
+    border-color: var(--fg);
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: wait;
+}
+
+button:focus-visible,
+input:focus-visible,
+a:focus-visible,
+.node:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+/* ---------- 상단 바 ---------- */
+
+.topbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px 32px;
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--line);
+}
+
+.stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 24px;
+    margin: 0;
+}
+
+.stats div {
+    display: flex;
+    gap: 6px;
+    align-items: baseline;
+}
+
+.stats dt {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.stats dd {
+    margin: 0;
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+}
+
+#stat-fps {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+/* ---------- 전체 레이아웃 ---------- */
+
+.layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+}
+
+.pane {
+    padding: 20px 24px;
+}
+
+.pane-video {
+    border-right: 1px solid var(--line);
+}
+
+.pane-side {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    padding: 0;
+}
+
+/* ---------- 좌측: 영상과 촬영 ---------- */
+
+.stream {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--line);
+    background: var(--line);
+}
+
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 12px 0 24px;
+}
+
+#capture-status {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.history {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+    gap: 8px;
+    margin: 10px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.history a {
+    display: block;
+    color: var(--muted);
+    text-decoration: none;
+}
+
+.history img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border: 1px solid var(--line);
+}
+
+.history a:hover img {
+    border-color: var(--line-strong);
+}
+
+.history span {
+    display: block;
+    margin-top: 3px;
+    overflow: hidden;
+    font-family: var(--mono);
+    font-size: 10px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ---------- 우측 상단: 플로우차트 ---------- */
+
+.flow {
+    display: grid;
+    grid-template-columns: 300px minmax(0, 1fr);
+    border-bottom: 1px solid var(--line);
+}
+
+.flow-chart {
+    padding: 20px 16px 16px 24px;
+    border-right: 1px solid var(--line);
+}
+
+.bottleneck {
+    margin: 6px 0 4px;
+    font-family: var(--mono);
+    font-size: 12px;
+}
+
+.bottleneck strong {
+    color: var(--accent);
+}
+
+#flowchart svg {
+    display: block;
+    width: 100%;
+    max-width: 280px;
+    height: auto;
+}
+
+.node {
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.node rect {
+    fill: var(--surface);
+    stroke: var(--line-strong);
+    stroke-width: 1;
+    transition: stroke 0.15s, stroke-width 0.15s;
+}
+
+.node:hover rect {
+    stroke: var(--fg);
+}
+
+.node .node-id {
+    fill: var(--fg);
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.node .node-label {
+    fill: var(--muted);
+    font-size: 11px;
+}
+
+.node .node-flag {
+    fill: var(--accent);
+    font-size: 11px;
+    font-weight: 600;
+    visibility: hidden;
+}
+
+/* 현재 실행 중인 단계: 테두리 강조 */
+.node.active rect {
+    stroke: var(--accent);
+    stroke-width: 3;
+}
+
+/* 선택한 단계 */
+.node.selected rect {
+    fill: var(--bg);
+}
+
+/* 병목 단계: 표식 표시 + 굵은 점선 테두리 */
+.node.bottleneck .node-flag {
+    visibility: visible;
+}
+
+.node.bottleneck rect {
+    stroke-dasharray: 4 3;
+    stroke-width: 1.5;
+}
+
+.node.active.bottleneck rect {
+    stroke-dasharray: none;
+    stroke-width: 3;
+}
+
+/* skip으로 추론을 건너뛴 프레임 */
+.node.dimmed {
+    opacity: 0.3;
+}
+
+.edge {
+    stroke: var(--line-strong);
+    stroke-width: 1;
+}
+
+.arrowhead {
+    fill: var(--line-strong);
+}
+
+.node-ms {
+    fill: var(--muted);
+    font-family: var(--mono);
+    font-size: 11px;
+}
+
+/* ---------- 우측 상단: 단계 상세 ---------- */
+
+.flow-detail {
+    padding: 20px 24px 16px;
+    overflow-wrap: anywhere;
+}
+
+.flow-detail dl {
+    display: grid;
+    grid-template-columns: 64px minmax(0, 1fr);
+    gap: 10px 12px;
+    margin: 14px 0 0;
+}
+
+.flow-detail dt {
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 12px;
+}
+
+.flow-detail dd {
+    margin: 0;
+    line-height: 1.55;
+}
+
+.flow-detail ul {
+    margin: 0;
+    padding-left: 16px;
+}
+
+.flow-detail code {
+    font-family: var(--mono);
+    font-size: 12px;
+}
+
+/* ---------- 우측 하단: 로그 콘솔 ---------- */
+
+.console {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 16px 24px 20px;
+}
+
+.console-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 14px;
+    margin-bottom: 10px;
+}
+
+.console-toolbar h2 {
+    margin-right: auto;
+}
+
+.console-toolbar label {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    font-family: var(--mono);
+    font-size: 12px;
+    cursor: pointer;
+}
+
+#pause-button[aria-pressed="true"] {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.log {
+    height: 300px;
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 10px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.6;
+    white-space: pre;
+}
+
+.log-line {
+    display: block;
+}
+
+.log-line.level-DEBUG {
+    color: var(--muted);
+}
+
+.log-line.level-WARN {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+/* 레벨 필터: 컨테이너 클래스로 숨겨 DOM을 다시 만들지 않는다. */
+.log.hide-INFO .level-INFO,
+.log.hide-DEBUG .level-DEBUG,
+.log.hide-WARN .level-WARN {
+    display: none;
+}
+
+/* ---------- 좁은 화면 ---------- */
+
+@media (max-width: 1200px) {
+    .flow {
+        grid-template-columns: 1fr;
+    }
+
+    .flow-chart {
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+    }
+}
+
+@media (max-width: 860px) {
+    .layout {
+        grid-template-columns: 1fr;
+    }
+
+    .pane-video {
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+    }
+
+    .topbar,
+    .pane,
+    .flow-chart,
+    .flow-detail,
+    .console {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+}

@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>웹캠 스트림</title>
+    <style>
+        /* 단색 배경 + 채도 낮은 중간 톤만 사용 */
+        :root {
+            --bg: #f3f1ec;
+            --surface: #ffffff;
+            --text: #2e2c29;
+            --muted: #7a756d;
+            --line: #dcd7ce;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 48px 16px;
+            background: var(--bg);
+            color: var(--text);
+            font-family: system-ui, -apple-system, "Segoe UI", "Malgun Gothic", sans-serif;
+        }
+
+        main {
+            max-width: {{ width }}px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            margin: 0 0 4px;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        p {
+            margin: 0 0 24px;
+            font-size: 14px;
+            color: var(--muted);
+        }
+
+        .frame {
+            padding: 8px;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+        }
+
+        .frame img {
+            display: block;
+            width: 100%;
+            height: auto;
+            aspect-ratio: {{ width }} / {{ height }};
+            border-radius: 4px;
+            background: var(--line);
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <h1>웹캠 실시간 스트림</h1>
+        <p>Flask · MJPEG (/video_feed)</p>
+
+        <div class="frame">
+            <img src="/video_feed" alt="웹캠 실시간 영상">
+        </div>
+    </main>
+</body>
+</html>

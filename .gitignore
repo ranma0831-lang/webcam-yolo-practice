@@ -1,0 +1,12 @@
+# 가상환경, 캐시
+.venv/
+__pycache__/
+*.pyc
+
+# YOLO 모델 파일 (첫 실행 시 자동 다운로드)
+*.pt
+*_openvino_model/
+
+# 실습 중 저장되는 사진 (개인 얼굴이 포함될 수 있음)
+captures/
+outputs/

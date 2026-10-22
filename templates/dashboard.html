@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>파이프라인 대시보드</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+</head>
+<body>
+    <!-- 상단 바: 실행 설정과 FPS -->
+    <header class="topbar">
+        <h1>YOLO 파이프라인</h1>
+        <dl class="stats">
+            <div><dt>FPS</dt><dd id="stat-fps">-</dd></div>
+            <div><dt>장치</dt><dd id="stat-device">{{ settings.device }} ({{ settings.backend }}){% if settings.half %} · half{% endif %}</dd></div>
+            <div><dt>imgsz</dt><dd id="stat-imgsz">{{ settings.imgsz }}</dd></div>
+            <div><dt>conf</dt><dd id="stat-conf">{{ settings.conf }}</dd></div>
+            <div><dt>skip</dt><dd id="stat-skip">{{ settings.skip }}</dd></div>
+            {% if settings.threads %}<div><dt>threads</dt><dd id="stat-threads">{{ settings.threads }}</dd></div>{% endif %}
+            <div><dt>프레임</dt><dd id="stat-frame">-</dd></div>
+            <div><dt>상태</dt><dd id="stat-status">연결 중</dd></div>
+        </dl>
+    </header>
+
+    <main class="layout">
+        <!-- 좌측: 탐지 스트림과 촬영 -->
+        <section class="pane pane-video" aria-label="탐지 영상">
+            <img class="stream" src="/detect_feed" alt="YOLO 탐지 결과 실시간 영상"
+                 style="aspect-ratio: {{ width }} / {{ height }};">
+
+            <div class="actions">
+                <button id="capture-button" type="button">촬영</button>
+                <span id="capture-status" role="status"></span>
+            </div>
+
+            <h2>촬영 이력 <span class="muted">(최근 {{ history_limit }}장)</span></h2>
+            <ul class="history" id="history">
+                {% for name in captures %}
+                <li>
+                    <a href="/captures/{{ name }}" target="_blank" rel="noopener">
+                        <img src="/captures/{{ name }}" alt="{{ name }}" loading="lazy">
+                        <span>{{ name }}</span>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+            <p class="muted" id="history-empty" {% if captures %}hidden{% endif %}>촬영 이력이 없습니다.</p>
+        </section>
+
+        <!-- 우측 -->
+        <div class="pane pane-side">
+            <!-- 우측 상단: 플로우차트 + 단계 상세 -->
+            <section class="flow" aria-label="파이프라인 플로우차트">
+                <div class="flow-chart">
+                    <h2>플로우차트</h2>
+                    <p class="bottleneck" id="bottleneck">병목: -</p>
+                    <div id="flowchart" role="list" aria-label="파이프라인 단계"></div>
+                </div>
+
+                <div class="flow-detail" id="detail" aria-live="polite">
+                    <h2 id="detail-title">단계 상세</h2>
+                    <p class="muted" id="detail-hint">플로우차트의 노드를 클릭하면 그 단계 함수의 설명이 나옵니다.</p>
+                    <dl id="detail-body" hidden>
+                        <dt>summary</dt><dd id="detail-summary"></dd>
+                        <dt>input</dt><dd id="detail-input"></dd>
+                        <dt>output</dt><dd id="detail-output"></dd>
+                        <dt>reason</dt><dd id="detail-reason"></dd>
+                        <dt>params</dt><dd><ul id="detail-params"></ul></dd>
+                    </dl>
+                </div>
+            </section>
+
+            <!-- 우측 하단: 로그 콘솔 -->
+            <section class="console" aria-label="로그 콘솔">
+                <div class="console-toolbar">
+                    <h2>로그</h2>
+                    <button id="pause-button" type="button" aria-pressed="false">일시정지</button>
+                    <label><input type="checkbox" data-level="INFO" checked> INFO</label>
+                    <label><input type="checkbox" data-level="DEBUG"> DEBUG</label>
+                    <label><input type="checkbox" data-level="WARN" checked> WARN</label>
+                    <button id="clear-button" type="button">지우기</button>
+                </div>
+                <div class="log hide-DEBUG" id="log" role="log" aria-live="off"></div>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        // 서버 설정 값 (JS에서 사용)
+        window.DASHBOARD = { historyLimit: {{ history_limit }} };
+    </script>
+    <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+</body>
+</html>

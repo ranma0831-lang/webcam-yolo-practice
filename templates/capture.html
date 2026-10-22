@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ page_title | default("웹캠 촬영") }}</title>
+    <style>
+        /* 단색 배경 + 채도 낮은 중간 톤만 사용 */
+        :root {
+            --bg: #f3f1ec;
+            --surface: #ffffff;
+            --text: #2e2c29;
+            --muted: #7a756d;
+            --line: #dcd7ce;
+            --button: #4a4740;
+            --button-hover: #2e2c29;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 48px 16px;
+            background: var(--bg);
+            color: var(--text);
+            font-family: system-ui, -apple-system, "Segoe UI", "Malgun Gothic", sans-serif;
+        }
+
+        main {
+            max-width: 1120px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            margin: 0 0 4px;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        h2 {
+            margin: 0 0 12px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--muted);
+        }
+
+        .subtitle {
+            margin: 0 0 24px;
+            font-size: 14px;
+            color: var(--muted);
+        }
+
+        .views {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 720px) {
+            .views {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .frame {
+            padding: 8px;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+        }
+
+        .frame img {
+            display: block;
+            width: 100%;
+            height: auto;
+            aspect-ratio: {{ width }} / {{ height }};
+            object-fit: cover;
+            border-radius: 4px;
+            background: var(--line);
+        }
+
+        .caption {
+            margin: 8px 4px 0;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 16px 0 32px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: 0;
+            border-radius: 6px;
+            background: var(--button);
+            color: var(--surface);
+            font: inherit;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: var(--button-hover);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: wait;
+        }
+
+        #status {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .history {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 8px;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .history button {
+            display: block;
+            width: 100%;
+            padding: 4px;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            cursor: pointer;
+        }
+
+        .history button:hover {
+            border-color: var(--muted);
+        }
+
+        .history img {
+            display: block;
+            width: 100%;
+            height: auto;
+            aspect-ratio: {{ width }} / {{ height }};
+            object-fit: cover;
+            border-radius: 3px;
+        }
+
+        .history span {
+            display: block;
+            margin-top: 4px;
+            font-size: 11px;
+            color: var(--muted);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .empty {
+            font-size: 13px;
+            color: var(--muted);
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <h1>{{ page_title | default("웹캠 촬영") }}</h1>
+        <p class="subtitle">{{ subtitle | default("스트림의 지금 한 장을 jpg로 저장합니다.") }}</p>
+
+        <div class="views">
+            <div class="frame">
+                <img src="{{ feed_url | default('/video_feed') }}" alt="웹캠 실시간 영상">
+                <p class="caption">{{ feed_caption | default("실시간") }}</p>
+            </div>
+
+            <div class="frame">
+                <img id="preview" alt="최근 촬영 이미지"
+                     {% if captures %}src="/captures/{{ captures[0] }}"{% endif %}>
+                <p class="caption" id="preview-name">
+                    {{ captures[0] if captures else "아직 촬영한 이미지가 없습니다." }}
+                </p>
+            </div>
+        </div>
+
+        <div class="actions">
+            <button id="capture-button" type="button">촬영</button>
+            <span id="status" role="status"></span>
+        </div>
+
+        <h2>촬영 이력 (최근 {{ history_limit }}장)</h2>
+        <ul class="history" id="history">
+            {% for name in captures %}
+            <li>
+                <button type="button" data-filename="{{ name }}">
+                    <img src="/captures/{{ name }}" alt="{{ name }}" loading="lazy">
+                    <span>{{ name }}</span>
+                </button>
+            </li>
+            {% endfor %}
+        </ul>
+        <p class="empty" id="empty" {% if captures %}hidden{% endif %}>촬영 이력이 없습니다.</p>
+    </main>
+
+    <script>
+        const HISTORY_LIMIT = {{ history_limit }};
+
+        const captureButton = document.getElementById("capture-button");
+        const statusText = document.getElementById("status");
+        const preview = document.getElementById("preview");
+        const previewName = document.getElementById("preview-name");
+        const history = document.getElementById("history");
+        const empty = document.getElementById("empty");
+
+        // 큰 미리보기 영역에 지정한 캡처 이미지를 보여준다.
+        function showPreview(filename) {
+            preview.src = "/captures/" + encodeURIComponent(filename);
+            previewName.textContent = filename;
+        }
+
+        // 촬영 이력 맨 앞에 썸네일을 추가하고 최근 HISTORY_LIMIT장만 남긴다.
+        function addThumbnail(filename) {
+            const item = document.createElement("li");
+            const button = document.createElement("button");
+            const image = document.createElement("img");
+            const label = document.createElement("span");
+
+            button.type = "button";
+            button.dataset.filename = filename;
+            image.src = "/captures/" + encodeURIComponent(filename);
+            image.alt = filename;
+            label.textContent = filename;
+
+            button.append(image, label);
+            item.append(button);
+            history.prepend(item);
+
+            while (history.children.length > HISTORY_LIMIT) {
+                history.lastElementChild.remove();
+            }
+
+            empty.hidden = true;
+        }
+
+        // 촬영 버튼: POST /capture → 응답 JSON의 파일명으로 화면 갱신 (새로고침 없음)
+        captureButton.addEventListener("click", async () => {
+            captureButton.disabled = true;
+            statusText.textContent = "저장 중...";
+
+            try {
+                const response = await fetch("/capture", { method: "POST" });
+                const data = await response.json();
+
+                if (!response.ok) {
+                    statusText.textContent = data.error || "촬영에 실패했습니다.";
+                    return;
+                }
+
+                showPreview(data.filename);
+                addThumbnail(data.filename);
+                statusText.textContent = "저장됨: " + data.filename;
+            } catch (error) {
+                statusText.textContent = "서버에 연결할 수 없습니다. 서버가 켜져 있는지 확인하세요.";
+            } finally {
+                captureButton.disabled = false;
+            }
+        });
+
+        // 썸네일 클릭 → 큰 미리보기로 보기
+        history.addEventListener("click", (event) => {
+            const button = event.target.closest("button[data-filename]");
+
+            if (button) {
+                showPreview(button.dataset.filename);
+            }
+        });
+    </script>
+</body>
+</html>
